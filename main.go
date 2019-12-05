@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/gomarkdown/markdown"
@@ -86,7 +87,15 @@ func getFileHtml(w http.ResponseWriter, filename string) (string, error) {
 		return "", err
 	}
 
+	md = replaceTasks(md)
 	return string(markdown.ToHTML(md, nil, nil)), nil
+}
+
+func replaceTasks(markdown []byte) []byte {
+	uncheckedRe := regexp.MustCompile(`- \[ \] `)
+	checkedRe := regexp.MustCompile(`- \[x\] `)
+	md := uncheckedRe.ReplaceAll(markdown, []byte(`- <input type="checkbox" disabled> `))
+	return checkedRe.ReplaceAll(md, []byte(`- <input type="checkbox" checked disabled> `))
 }
 
 func getDirHtml(w http.ResponseWriter, dirname string) (string, error) {
